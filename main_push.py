@@ -29,6 +29,7 @@ chp_color_arr = [
     'crimson', 'darkseagreen', 'violet', 'plum', 'greenyellow'
 ]
 
+
 def check_json_format(raw_msg):
     """
     用于判断一个字符串是否符合Json格式
@@ -101,12 +102,14 @@ def weather_v2(city_weather='东莞市凤岗镇天气'):
             """,
             "digest": "东莞市凤岗镇天气"
         }
-        QiWeixin.send_mpnews(mpnews, wecom_cid, wecom_secret, wecom_aid)
+        if QiWeixin.send_mpnews(mpnews, wecom_cid, wecom_secret, wecom_aid):
+            logger.info("消息发送成功")
     except Exception as e:
         logger.exception(e)
         Email.send_error_email('python执行异常：{}'.format(e))
     finally:
         ImageUtil.del_file(img_tmp_path)
+
 
 interval_task = {
     # 配置存储器
@@ -131,4 +134,7 @@ apsched = AsyncIOScheduler(**interval_task, timezone="Asia/Shanghai")
 apsched.add_job(weather_v2, 'cron', hour='7,11,17', minute=45, second=30, args=['东莞市凤岗镇天气'])
 
 if __name__ == '__main__':
+    logger.info('wechat-girlfriend-push start!')
     apsched.start()
+    while True:
+        time.sleep(5)
