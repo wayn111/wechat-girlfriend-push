@@ -8,6 +8,7 @@ import jwt
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 from dotenv import load_dotenv
 
 from third.image_util import ImageUtil
@@ -65,7 +66,8 @@ def get_weekdays():
     return week
 
 
-def weather_v2(city_weather='东莞市凤岗镇天气'):
+def weather_v2(city_weather='广东省凤岗镇天气预报'):
+    print(1)
     try:
         now_day = time.localtime(time.time())  # 得到结构化时间格式
         now = time.strftime("%Y-%m-%d", now_day)
@@ -88,7 +90,7 @@ def weather_v2(city_weather='东莞市凤岗镇天气'):
                                         url=f'https://qyapi.weixin.qq.com/cgi-bin/media/uploadimg?access_token={token}')
         img_url = result['url']
 
-        chp_text_color = chp_color_arr[random.randint(1, 10)]
+        chp_text_color = chp_color_arr[random.randint(0, 9)]
         mpnews = {
             "title": "柯宝的专属通知😘",
             "thumb_media_id": f'{tmp_media_id}',
@@ -107,8 +109,8 @@ def weather_v2(city_weather='东莞市凤岗镇天气'):
     except Exception as e:
         logger.exception(e)
         Email.send_error_email('python执行异常：{}'.format(e))
-    finally:
-        ImageUtil.del_file(img_tmp_path)
+    # finally:
+        # ImageUtil.del_file(img_tmp_path)
 
 
 interval_task = {
@@ -120,21 +122,19 @@ interval_task = {
     # 配置执行器
     "executors": {
         # 使用进程池进行调度，最大进程数是10个
-        'default': ProcessPoolExecutor(1)
+        'default': ProcessPoolExecutor(2)
     },
     # 创建job时的默认参数
     "job_defaults": {
         'coalesce': False,  # 是否合并执行
-        'max_instances': 3,  # 最大实例数
+        'max_instances': 2,  # 最大实例数
     }
 }
 
-apsched = AsyncIOScheduler(**interval_task, timezone="Asia/Shanghai")
+apsched = BlockingScheduler(**interval_task, timezone="Asia/Shanghai")
 
 apsched.add_job(weather_v2, 'cron', hour='7,11,17', minute=45, second=30, args=['东莞市凤岗镇天气'])
 
 if __name__ == '__main__':
     logger.info('wechat-girlfriend-push start!')
     apsched.start()
-    while True:
-        time.sleep(5)

@@ -23,13 +23,15 @@ def screen_shot(city):
     # 无头参数
     options.add_argument('--headless')
     options.add_argument('--disable-gpu')
+    # 替换User-Agent
+    options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.50')
     # 创建浏览器选项对象
     # 启动浏览器
     driver = Chrome(options=options)
     driver.maximize_window()
     try:
         # 访问页面
-        url = f'https://so.toutiao.com/search?dvpf=pc&source=input&keyword={city}'
+        url = f'https://so.toutiao.com/search?wid_ct=1676801414471&dvpf=pc&source=input&keyword={city}&page_num=0&pd=synthesis'
         driver.get(url)
         driver.add_cookie({'name': 'ttwid',
                            'value': '1%7Cf-KdTK9I1GyXCCNp5FxDYQj2uCP3ozk1E7GsMoDrENw%7C1674919873%7Ce0678f6f1a24b5fb4db4dc4a475971da28ec73eae0a6271080a8031a20be93c5'})
