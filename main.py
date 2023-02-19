@@ -131,5 +131,4 @@ apsched = AsyncIOScheduler(**interval_task, timezone="Asia/Shanghai")
 apsched.add_job(weather_v2, 'cron', hour='7,11,17', minute=45, second=30, args=['东莞市凤岗镇天气'])
 
 if __name__ == '__main__':
-    # apsched.start()
-    weather_v2()
+    apsched.start()
