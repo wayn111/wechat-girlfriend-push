@@ -1,7 +1,7 @@
 import json
 
 import requests
-import random
+
 
 class QiWeixin(object):
 
@@ -82,18 +82,3 @@ class QiWeixin(object):
         if content['errcode'] != 0:
             raise Exception(content)
         return content['access_token']
-
-    @classmethod
-    def get_chp_text(cls):
-        url = 'https://api.shadiao.pro/chp'
-        res = requests.get(url)
-        return res.json()['data']['text']
-
-
-    @classmethod
-    def get_bing_wallpaper(cls):
-        url = f'https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=7'
-        res = requests.get(url)
-        n = random.randint(0, 4)
-        return "https://cn.bing.com" + res.json()['images'][n]['url']
-

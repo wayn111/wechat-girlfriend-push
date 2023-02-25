@@ -7,20 +7,20 @@ import time
 import jwt
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.blocking import BlockingScheduler
 from dotenv import load_dotenv
 
 from third.image_util import ImageUtil
 from third.logger import logger
-from third.myemail import Email
 from third.qiyeweixin import QiWeixin
-from third.weather_screenshot import cdrop, screen_shot
+from third.service import Service
+from third.weather_screenshot import cdrop, weather_screen_shot
 
 # 自动搜索.env文件
 load_dotenv(verbose=True)
 img_tmp_path = os.getenv('img_tmp_path')
 together_day_str = os.getenv('together_day')
+girl_born_date_str = os.getenv('girl_born_date')
 wecom_cid = os.getenv('wecom_cid')
 wecom_aid = os.getenv('wecom_aid')
 wecom_secret = os.getenv('wecom_secret')
@@ -66,51 +66,52 @@ def get_weekdays():
     return week
 
 
-def weather_v2(city_weather='广东省凤岗镇天气预报'):
-    print(1)
+def push_info(city_weather='dongguan'):
     try:
         now_day = time.localtime(time.time())  # 得到结构化时间格式
         now = time.strftime("%Y-%m-%d", now_day)
         week = get_weekdays()
-        img_url = screen_shot(city_weather)
+        img_url = weather_screen_shot(city_weather)
         cdrop(img_url)
         token = QiWeixin.get_token(wecom_cid, wecom_secret)
         result = ImageUtil.upload_image(image_path=f'{img_tmp_path}/crop.png',
                                         url=f'https://qyapi.weixin.qq.com/cgi-bin/media/upload?access_token={token}&type=image')
         tmp_media_id = result['media_id']
-        chp_text = QiWeixin.get_chp_text()
-
         together_day = datetime.datetime.strptime(together_day_str, '%Y-%m-%d')  # 注意str的格式要与'%Y-%m-%d'相匹配。
         diff_day_num = (datetime.datetime.now().__sub__(together_day)).days
 
-        wallpaper_url = QiWeixin.get_bing_wallpaper()
-
+        # bing壁纸
+        wallpaper_url = Service.get_bing_wallpaper()
         img_local_path = ImageUtil.download_image(img_tmp_path, wallpaper_url)
         result = ImageUtil.upload_image(image_path=img_local_path,
                                         url=f'https://qyapi.weixin.qq.com/cgi-bin/media/uploadimg?access_token={token}')
         img_url = result['url']
-
+        # 星座
+        xing_zuo_list = Service.xing_zuo(int(girl_born_date_str))
+        # 彩虹屁颜色
+        chp_text = Service.get_chp_text()
         chp_text_color = chp_color_arr[random.randint(0, 9)]
         mpnews = {
-            "title": "柯宝的专属通知😘",
+            "title": "东莞市天气",
             "thumb_media_id": f'{tmp_media_id}',
             "author": "waynaqua",
             "content": f"""
             <div style="color:green;">{now} {week}</div>
-            <div>今天是我们在一起的第<span style="color:lightcoral;">{diff_day_num}</span>天</div>
+            <div>宝贝，今天是我们在一起的第<span style="color:lightcoral;">{diff_day_num}</span>天</div>
             <img src="{img_url}">
+            <div style="color:cadetblue;">{xing_zuo_list[0]}今日综合运势：</div> 
+            <div>{xing_zuo_list[1]}</div> 
             <br />
             <div style="color:{chp_text_color};">{chp_text}</div> 
             """,
-            "digest": "东莞市凤岗镇天气"
+            "digest": "柯宝的专属通知😘"
         }
         if QiWeixin.send_mpnews(mpnews, wecom_cid, wecom_secret, wecom_aid):
             logger.info("消息发送成功")
     except Exception as e:
         logger.exception(e)
-        Email.send_error_email('python执行异常：{}'.format(e))
     # finally:
-        # ImageUtil.del_file(img_tmp_path)
+    # ImageUtil.del_file(img_tmp_path)
 
 
 interval_task = {
@@ -133,7 +134,7 @@ interval_task = {
 
 apsched = BlockingScheduler(**interval_task, timezone="Asia/Shanghai")
 
-apsched.add_job(weather_v2, 'cron', hour='7,11,17', minute=45, second=30, args=['东莞市凤岗镇天气'])
+apsched.add_job(push_info, 'cron', hour='7', minute=45, second=30, args=['dongguan'])
 
 if __name__ == '__main__':
     logger.info('wechat-girlfriend-push start!')
