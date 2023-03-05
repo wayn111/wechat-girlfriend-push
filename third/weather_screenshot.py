@@ -1,4 +1,3 @@
-import json
 import os.path
 import time
 
@@ -6,7 +5,6 @@ from PIL import Image
 from dotenv import load_dotenv
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 
 tianqi_arr = [
     '⛅', '☀️', '🌦️', '❄️', '⛈️', '💧'
@@ -32,7 +30,7 @@ def weather_screen_shot(city):
         # 访问页面
         url = f'https://www.tianqi.com/{city}'
         driver.get(url)
-        time.sleep(3)
+        time.sleep(5)
         # 设置截屏整个网页的宽度以及高度
         scroll_width = 1920
         scroll_height = 1080
@@ -41,18 +39,18 @@ def weather_screen_shot(city):
         # driver.execute_script("window.scrollTo(0, 125);")
         # 保存图片
         img_name = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time()))
-        imgUrl = "%s.png" % os.path.join(img_tmp_path, img_name)
-        driver.get_screenshot_as_file(imgUrl)
+        img_url = "%s.png" % os.path.join(img_tmp_path, img_name)
+        driver.get_screenshot_as_file(img_url)
         # 关闭浏览器
         # driver.close()
         # driver.quit()
-        return imgUrl
+        return img_url
     except Exception as e:
         print(e)
 
 
-def cdrop(imgUrl):
-    img = Image.open(imgUrl)
+def cdrop(img_url):
+    img = Image.open(img_url)
     width, height = img.size
     # 前两个坐标点是左上角坐标
     # 后两个坐标点是右下角坐标
@@ -60,6 +58,7 @@ def cdrop(imgUrl):
     box = (270, 310, 910, 570)
     region = img.crop(box)
     region.save(f'{img_tmp_path}/crop.png')
+
 
 if __name__ == '__main__':
     cdrop('E:\GitRepo\wechat-girlfriend-push\img\\tmp\\2023-02-25-16-42-44.png')
